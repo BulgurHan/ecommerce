@@ -1,7 +1,7 @@
 from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
 from import_export import resources
-from .models import Order, OrderItem, Cart, CartItem, Adress
+from .models import Order, OrderItem, Cart, CartItem, Adress, PaymentModel
 
 
 class OrderItemInline(admin.TabularInline):
@@ -37,3 +37,4 @@ class OrderAdmin(ImportExportModelAdmin):
 admin.site.register(Cart)
 admin.site.register(CartItem)
 admin.site.register(Adress)
+admin.site.register(PaymentModel)

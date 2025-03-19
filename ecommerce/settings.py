@@ -43,6 +43,10 @@ INSTALLED_APPS = [
     'product',
     'order',
     'page',
+
+    #3rd party app
+    'rest_framework',
+    'rest_framework_simplejwt',
 ]
 
 MIDDLEWARE = [
@@ -142,6 +146,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
 
-IYZICO_API_KEY = 'sandbox-vgEyQi5uQy7OnUWKhYp4EfpmhWBaNMrD'
-IYZICO_SECRET_KEY = 'sandbox-YWqX9LMrirXkJupl16tpMpu3fkqKKVkR'
-
+PAYMENT_OPTIONS = {
+    "api_key": 'sandbox-vgEyQi5uQy7OnUWKhYp4EfpmhWBaNMrD',
+    "secret_key": 'sandbox-YWqX9LMrirXkJupl16tpMpu3fkqKKVkR',
+    "base_url": "sandbox-api.iyzipay.com"
+}

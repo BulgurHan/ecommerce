@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models import Sum
+import random
 from django.db.models.signals import post_save
 from django.core.mail import EmailMessage
 from django.template.loader import get_template
@@ -124,3 +125,28 @@ class Adress(models.Model):
     city = models.CharField(max_length=250, blank=True, verbose_name='Alıcının İli')
     district = models.CharField(max_length=250, blank=True, verbose_name='Alıcının İlçesi')
     postCode = models.CharField(max_length=10, blank=True, verbose_name='Alıcı Posta Kodu')
+
+
+
+class PaymentModel(models.Model):
+    STATUS_CHOICES = [
+        ('success', 'Başarılı'),
+        ('failure', 'Başarısız'),
+        ('pending', 'Beklemede'),
+    ]
+    locale = models.CharField(max_length=10, default='tr')
+    conversationId = models.CharField(max_length=10, blank=True)
+    token = models.CharField(max_length=50, default=None, blank=True, null=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending') 
+    
+    @staticmethod
+    def generate_random_id(length=10):
+        return ''.join(str(random.randint(0, 9)) for _ in range(length))
+
+    def save(self, *args, **kwargs):
+        if not self.pk and not self.conversationId:
+            self.conversationId = self.generate_random_id()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.locale} - {self.conversationId} - {self.get_status_display()}'

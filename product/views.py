@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import reverse, resolve_url
 from django.views.generic import TemplateView
 from django.http import JsonResponse
 from django.conf import settings
@@ -6,11 +7,14 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import EmailMessage
 from django.template.loader import get_template
 from product.models import Product,ProductVariant
-from order.models import Order, OrderItem, Cart, CartItem, Adress
+from order.models import Order, OrderItem, Cart, CartItem, Adress, PaymentModel
 import iyzipay
 import json
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
+from ecommerce.settings import PAYMENT_OPTIONS
+
+
 
 # Cart için session id üreten yardımcı fonksiyon
 def _cart_id(request):
@@ -183,132 +187,98 @@ def sendEmail(order_id):
 
 
 
-# Iyzico API anahtarları ve URL
-API_KEY = settings.IYZICO_API_KEY
-SECRET_KEY = settings.IYZICO_SECRET_KEY
-BASE_URL = "sandbox-api.iyzipay.com"
-PAYMENT_OPTIONS = {
-    "api_key": API_KEY,
-    "secret_key": SECRET_KEY,
-    "base_url": BASE_URL,
-}
 
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    return x_forwarded_for.split(',')[0] if x_forwarded_for else request.META.get('REMOTE_ADDR')
+
+
+def get_basket_items(cart):
+    basket_items = []
+    
+    for item in cart.cartitem_set.all():
+        basket_items.append({
+            'id': f"BI0{item.id}",  # ID formatı için BI ekledik
+            'name': item.product.name,
+            'category1': "General",
+            'category2': "Giyim",
+            'itemType': "PHYSICAL",
+            'price': str(item.product.price)  
+        })
+    
+    return basket_items
 
 class PaymentPage(TemplateView):
     template_name = 'payment.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        request = self.request
+        callback_url = f"{request.scheme}://{request.get_host()}{reverse('page:result')}"
+        payment_model: PaymentModel = PaymentModel.objects.create()
+        cart = Cart.objects.get(user=request.user)
+        basket_items = get_basket_items(cart)
+        adres = Adress.objects.get(user = request.user)
         buyer = {
-            'id': 'BY789',
-            'name': 'John',
-            'surname': 'Doe',
-            'gsmNumber': '+905350000000',
-            'email': 'email@email.com',
-            'identityNumber': '74300864791',
-            'lastLoginDate': '2015-10-05 12:43:35',
-            'registrationDate': '2013-04-21 15:12:09',
-            'registrationAddress': 'Nidakule Göztepe, Merdivenköy Mah. Bora Sok. No:1',
-            'ip': '85.34.78.112',
-            'city': 'Istanbul',
+            'id': str(request.user.pk),
+            'name': str(request.user.first_name),
+            'surname': str(request.user.last_name),
+            'gsmNumber': f'+90{adres.phone}' if adres.phone else '',
+            'email': str(request.user.email),
+            'identityNumber': '22222222222',
+            'lastLoginDate': str(request.user.last_login),
+            'registrationDate': str(request.user.date_joined),
+            'registrationAddress': str(adres.address),
+            'ip': get_client_ip(request),
+            'city': str(adres.city),
             'country': 'Turkey',
-            'zipCode': '34732'
+            'zipCode': str(adres.postCode)
         }
 
         address = {
-            'contactName': 'Jane Doe',
-            'city': 'Istanbul',
+            'contactName': f'{request.user.first_name} {request.user.last_name}',
+            'city': str(adres.city),
             'country': 'Turkey',
-            'address': 'Nidakule Göztepe, Merdivenköy Mah. Bora Sok. No:1',
-            'zipCode': '34732'
+            'address': str(adres.address),
+            'zipCode': str(adres.postCode)
         }
 
-        basket_items = [
-            {
-                'id': 'BI101',
-                'name': 'Binocular',
-                'category1': 'Collectibles',
-                'category2': 'Accessories',
-                'itemType': 'PHYSICAL',
-                'price': '0.3'
-            },
-            {
-                'id': 'BI102',
-                'name': 'Game code',
-                'category1': 'Game',
-                'category2': 'Online Game Items',
-                'itemType': 'VIRTUAL',
-                'price': '0.5'
-            },
-            {
-                'id': 'BI103',
-                'name': 'Usb',
-                'category1': 'Electronics',
-                'category2': 'Usb / Cable',
-                'itemType': 'PHYSICAL',
-                'price': '0.2'
-            }
-        ]
 
         request = {
             'locale': 'tr',
-            'conversationId': '123456789',
-            'price': '1',
-            'paidPrice': '1.2',
+            'conversationId': payment_model.conversationId,
+            'price': str(cart.total),
+            'paidPrice': str(cart.total),
             'currency': 'TRY',
-            'basketId': 'B67832',
+            'basketId': str(cart.pk),
             'paymentGroup': 'PRODUCT',
-            "callbackUrl": "http://localhost:8000/api/result",
+            "callbackUrl": callback_url,
             "enabledInstallments": ['2', '3', '6', '9'],
             'buyer': buyer,
             'shippingAddress': address,
             'billingAddress': address,
             'basketItems': basket_items,
+            # 'debitCardAllowed': True
         }
-
         checkout_form_initialize = iyzipay.CheckoutFormInitialize().create(request, PAYMENT_OPTIONS)
-        content = json.loads(checkout_form_initialize.read().decode('utf-8'))
-        context['form'] = content.get("checkoutFormContent", "")
+        content = json.loads(checkout_form_initialize.read().decode('utf-8'))  # Zaten JSON formatında bir Python dict olacak
+        context['form'] = content.get("checkoutFormContent", "")  # Güvenli erişim için .get() kullanıyoruz
+        token = content.get("token")  # JSON'dan token alınıyor
+
+        payment_model.token = token  # Token modelde saklanıyor
+        payment_model.save()
+
         return context
+
 
 
 class CheckoutView(TemplateView):
     template_name = 'checkout.html'
 
 
-class PaymentStatusView(TemplateView):
-    template_name = 'status.html'
-
-    def get(self, request, *args, **kwargs):
-        status = request.GET.get('status', None)
-
-        if status == 'success':
-            messages.add_message(request, messages.SUCCESS, "payment successful.")
-        elif status == 'fail':
-            messages.add_message(request, messages.ERROR, "payment could not be received")
-        else:
-            messages.add_message(request, messages.ERROR, "unknown error while receiving payment")
-
-        return super().get(request, *args, **kwargs)
 
 
-@csrf_exempt
-def payment_result(request):
-    if request.method == "POST":
-        try:
-            raw_data = json.loads(request.body)
-            conversation_id = raw_data.get("conversationId")
-            status = raw_data.get("status")
 
-            if status == "SUCCESS":
-                return JsonResponse({"message": "Ödeme başarılı!", "conversation_id": conversation_id})
-            else:
-                return JsonResponse({"message": "Ödeme başarısız!", "error": raw_data}, status=400)
-
-        except Exception as e:
-            return JsonResponse({"error": "Bir hata oluştu.", "details": str(e)}, status=500)
-
-    return JsonResponse({"error": "Bu endpoint yalnızca POST isteklerini kabul eder."}, status=405)
 
 
 def save_address(request):
