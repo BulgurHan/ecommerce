@@ -203,7 +203,7 @@ def get_basket_items(cart):
             'category1': "General",
             'category2': "Giyim",
             'itemType': "PHYSICAL",
-            'price': str(item.product.price)  
+            'price': str(item.product.price * item.quantity)  # Toplam fiyat
         })
     
     return basket_items
@@ -215,7 +215,7 @@ class PaymentPage(TemplateView):
         context = super().get_context_data(**kwargs)
         request = self.request
         callback_url = f"{request.scheme}://{request.get_host()}{reverse('page:result')}"
-        payment_model: PaymentModel = PaymentModel.objects.create()
+        payment_model: PaymentModel = PaymentModel.objects.create(user=request.user)
         cart = Cart.objects.get(user=request.user)
         basket_items = get_basket_items(cart)
         adres = Adress.objects.get(user = request.user)
@@ -264,7 +264,6 @@ class PaymentPage(TemplateView):
         content = json.loads(checkout_form_initialize.read().decode('utf-8'))  # Zaten JSON formatında bir Python dict olacak
         context['form'] = content.get("checkoutFormContent", "")  # Güvenli erişim için .get() kullanıyoruz
         token = content.get("token")  # JSON'dan token alınıyor
-
         payment_model.token = token  # Token modelde saklanıyor
         payment_model.save()
 

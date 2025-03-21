@@ -14,6 +14,7 @@ STATUS_CHOICES = [
 ]
 
 class Order(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
     token = models.CharField(max_length=250, blank=True)
     total = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='TL Sipariş Toplamı')
     emailAddress = models.EmailField(max_length=250, blank=True, verbose_name='E-mail')
@@ -22,12 +23,12 @@ class Order(models.Model):
     billingName = models.CharField(max_length=250, blank=True, verbose_name='Alıcı Adı')
     billingAddress1 = models.CharField(max_length=250, blank=True, verbose_name='Alıcı Adresi')
     billingCity = models.CharField(max_length=250, blank=True, verbose_name='Alıcının Şehri')
-    district = models.CharField(max_length=250, blank=True, verbose_name='Alıcının İlçesi')
+    billingDistrict = models.CharField(max_length=250, blank=True, verbose_name='Alıcının İlçesi')
     billingPostCode = models.CharField(max_length=10, blank=True, verbose_name='Alıcı Posta Kodu')
     shippingName = models.CharField(max_length=250, blank=True, verbose_name='Alıcı Adı')
     shippingAddress1 = models.CharField(max_length=250, blank=True, verbose_name='Kargo Adresi')
     shippingCity = models.CharField(max_length=250, blank=True, verbose_name='Kargo Şehri')
-    district = models.CharField(max_length=250, blank=True, verbose_name='Kargo İlçesi')
+    shippingDistrict = models.CharField(max_length=250, blank=True, verbose_name='Kargo İlçesi')
     shippingPostCode = models.CharField(max_length=10, blank=True, verbose_name='Kargo Posta Kodu')
     status = models.CharField(max_length=15, default='Hazırlanıyor', choices=STATUS_CHOICES, verbose_name="Durum")
     kargo = models.IntegerField(default=0, verbose_name="Kargo Takip Numarası")
@@ -37,6 +38,13 @@ class Order(models.Model):
         ordering = ('-created',)
         verbose_name = 'Sipariş'
         verbose_name_plural = 'Siparişler'
+    
+    def calculate_total(self):
+        """
+        Siparişin toplam tutarını hesaplar.
+        """
+        total = sum(item.sub_total() for item in self.orderitem_set.all())
+        return total
 
     def __str__(self):
         return str(self.id)
@@ -134,6 +142,7 @@ class PaymentModel(models.Model):
         ('failure', 'Başarısız'),
         ('pending', 'Beklemede'),
     ]
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
     locale = models.CharField(max_length=10, default='tr')
     conversationId = models.CharField(max_length=10, blank=True)
     token = models.CharField(max_length=50, default=None, blank=True, null=True)
