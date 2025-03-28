@@ -143,13 +143,13 @@
                                         <div class="col">
                                             <div data-mdb-input-init class="form-outline">
                                                 <input type="text" id="isim" class="form-control" name="first_name"
-                                                       value="{{ request.user.first_name|default:'' }}" placeholder="İsim" required/>
+                                                       value="{% if adres %}{{ adres.first_name }}{% endif %}" placeholder="İsim" required/>
                                             </div>
                                         </div>
                                         <div class="col">
                                             <div data-mdb-input-init class="form-outline">
                                                 <input type="text" id="soyisim" class="form-control" name="last_name"
-                                                       value="{{ request.user.last_name|default:'' }}" placeholder="Soyisim" required/>
+                                                       value="{% if adres %}{{ adres.last_name }}{% endif %}" placeholder="Soyisim" required/>
                                             </div>
                                         </div>
                                     </div>
@@ -162,7 +162,7 @@
                                     <!-- Email input -->
                                     <div data-mdb-input-init class="form-outline mb-4">
                                         <input type="email" id="email" class="form-control"  name='email'
-                                               value="{{ request.user.email|default:'' }}" placeholder="E-mail"  required/>
+                                               value="{% if adres %}{{ adres.email }}{% endif %}" placeholder="E-mail"  required/>
                                     </div>
                 
                                     <div class="row mb-4">

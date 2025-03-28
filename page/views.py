@@ -122,27 +122,34 @@ class ResultView(APIView):
                 payment_model.status = "success"
                 payment_model.save()
                 user = payment_model.user
-                adres = Adress.objects.get(user=user)
+                session_key = payment_model.payment_id
+                if request.user.is_authenticated:
+                    adres = Adress.objects.get(user=user)
+                    cart = Cart.objects.get(user=user)
+                else:
+                    adres = Adress.objects.get(address_id = session_key)
+                    cart = Cart.objects.get(cart_id = session_key)
+                    user = None
 
                 order = Order.objects.create(
                     user=user,
                     token=payment_model.token,
                     total=0,  # İlk başta 0 olarak oluştur
-                    emailAddress=user.email,
+                    emailAddress=adres.email,
                     phone=adres.phone,
-                    billingName=user.get_full_name(),
+                    billingName=f'{adres.first_name} {adres.last_name}',
                     billingAddress1=adres.address,
                     billingCity=adres.city,
                     billingPostCode=adres.postCode,
                     billingDistrict=adres.district,
-                    shippingName=user.get_full_name(),
+                    shippingName=f'{adres.first_name} {adres.last_name}',
                     shippingAddress1=adres.address,
                     shippingCity=adres.city,
                     shippingPostCode=adres.postCode,
                     shippingDistrict=adres.district,
                 )
 
-                cart = Cart.objects.get(user=user)
+                
                 for item in CartItem.objects.filter(cart=cart):
                     OrderItem.objects.create(
                         order=order,

@@ -127,7 +127,11 @@ class CartItem(models.Model):
 
 
 class Adress(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    address_id = models.CharField(max_length=250, blank=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
+    first_name = models.CharField(max_length=50, blank=True, verbose_name="İsim")
+    last_name = models.CharField(max_length=50, blank=True, verbose_name="Soyisim")
+    email = models.EmailField(max_length=254, blank=True, verbose_name="E-Posta")
     phone = models.CharField(max_length=20, blank=True, verbose_name='Telefon')
     address = models.CharField(max_length=250, blank=True, verbose_name='Alıcı Adresi')
     city = models.CharField(max_length=250, blank=True, verbose_name='Alıcının İli')
@@ -142,6 +146,7 @@ class PaymentModel(models.Model):
         ('failure', 'Başarısız'),
         ('pending', 'Beklemede'),
     ]
+    payment_id = models.CharField(max_length=250, blank=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
     locale = models.CharField(max_length=10, default='tr')
     conversationId = models.CharField(max_length=10, blank=True)

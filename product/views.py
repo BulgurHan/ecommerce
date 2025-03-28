@@ -10,6 +10,7 @@ from product.models import Product,ProductVariant
 from order.models import Order, OrderItem, Cart, CartItem, Adress, PaymentModel
 import iyzipay
 import json
+from datetime import datetime
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from ecommerce.settings import PAYMENT_OPTIONS
@@ -81,15 +82,16 @@ def add_cart(request):
 
 
 
-# Sepet detayları 
 def cart_detail(request, total=0, counter=0):
-    # Adres bilgisi var mi kontrol et
+    # Adres bilgisi var mı kontrol et
     try:
-        adres = Adress.objects.get(user=request.user)
-    except ObjectDoesNotExist:
+        if request.user.is_authenticated:
+            adres = Adress.objects.get(user=request.user)
+        else:
+            adres = Adress.objects.get(address_id = request.session.session_key)
+    except:
         adres = None
 
-    # Sepet bilgilerini al
     cart = None
     cart_items = []
 
@@ -102,7 +104,9 @@ def cart_detail(request, total=0, counter=0):
         if not session_key:
             request.session.create()
             session_key = request.session.session_key
-        cart, created = Cart.objects.get_or_create(cart_id=session_key)
+        
+        # user=None olarak belirtiyoruz, çünkü anonim kullanıcıya user atanamaz
+        cart, created = Cart.objects.get_or_create(cart_id=session_key, defaults={"user": None})
 
     # Sepet öğelerini getir
     if cart:
@@ -110,7 +114,7 @@ def cart_detail(request, total=0, counter=0):
 
     return render(request, 'cart.html', {
         'cart_items': cart_items,
-        'adres' : adres
+        'adres': adres
     })
 
 
@@ -214,12 +218,12 @@ class PaymentPage(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         request = self.request
-        callback_url = f"{request.scheme}://{request.get_host()}{reverse('page:result')}"
-        payment_model: PaymentModel = PaymentModel.objects.create(user=request.user)
-        cart = Cart.objects.get(user=request.user)
-        basket_items = get_basket_items(cart)
-        adres = Adress.objects.get(user = request.user)
-        buyer = {
+        callback_url = f"{request.scheme}://{request.get_host()}{reverse('page:result')}"            
+        if request.user.is_authenticated:
+            payment_model: PaymentModel = PaymentModel.objects.create(user=request.user)   
+            cart = Cart.objects.get(user=request.user)
+            adres = Adress.objects.get(user = request.user)
+            buyer = {
             'id': str(request.user.pk),
             'name': str(request.user.first_name),
             'surname': str(request.user.last_name),
@@ -235,13 +239,42 @@ class PaymentPage(TemplateView):
             'zipCode': str(adres.postCode)
         }
 
-        address = {
-            'contactName': f'{request.user.first_name} {request.user.last_name}',
+            address = {
+                'contactName': f'{request.user.first_name} {request.user.last_name}',
+                'city': str(adres.city),
+                'country': 'Turkey',
+                'address': str(adres.address),
+                'zipCode': str(adres.postCode)
+            }
+        else:
+            adres = Adress.objects.get(address_id = request.session.session_key)
+            payment_model: PaymentModel = PaymentModel.objects.create(payment_id = request.session.session_key)   
+            cart = Cart.objects.get(cart_id = request.session.session_key)
+            buyer = {
+            'id': str(adres.pk),
+            'name': str(adres.first_name),
+            'surname': str(adres.last_name),
+            'gsmNumber': f'+90{adres.phone}' if adres.phone else '',
+            'email': str(adres.email),
+            'identityNumber': '22222222222',
+            'lastLoginDate': str(datetime.now()),
+            'registrationDate': str(datetime.now()),
+            'registrationAddress': str(adres.address),
+            'ip': get_client_ip(request),
             'city': str(adres.city),
             'country': 'Turkey',
-            'address': str(adres.address),
             'zipCode': str(adres.postCode)
-        }
+            }
+
+            address = {
+                'contactName': f'{adres.first_name} {adres.last_name}',
+                'city': str(adres.city),
+                'country': 'Turkey',
+                'address': str(adres.address),
+                'zipCode': str(adres.postCode)
+            }
+        basket_items = get_basket_items(cart)
+        
 
 
         request = {
@@ -285,6 +318,7 @@ def save_address(request):
         # Formdan gelen verileri al
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
         phone = request.POST.get('phone')
         city = request.POST.get('city')
         district = request.POST.get('district')
@@ -295,7 +329,10 @@ def save_address(request):
         if request.user.is_authenticated:
             adres, created = Adress.objects.update_or_create(
                             user=request.user,  
-                            defaults={  
+                            defaults={
+                                'first_name': first_name,
+                                'last_name': last_name,
+                                'email': email,  
                                 'phone': phone,
                                 'city': city,
                                 'district': district,
@@ -305,15 +342,19 @@ def save_address(request):
                             )
             
         # kullanici giris yapmamis ise Adresi session'a kaydet
-        request.session['shipping_address'] = {
-            'first_name': first_name,
-            'last_name': last_name,
-            'phone': phone,
-            'city': city,
-            'district': district,
-            'post_code': post_code,
-            'address': address,
-        }
+        adres, created = Adress.objects.update_or_create(
+                address_id=request.session.session_key,  
+                defaults={
+                    "first_name" : first_name,
+                    "last_name" : last_name,
+                    'email': email,  
+                    'phone': phone,
+                    'city': city,
+                    'district': district,
+                    'postCode': post_code,
+                    'address': address,
+                    }
+                )
 
         return redirect('payment')  # Payment sayfasına yönlendir
     else:
