@@ -663,13 +663,12 @@ Input, textarea : 14px/1.6 '', Arial, sans-serif;
   display: flex;
   justify-content: center;
   align-items: center;
-  flex-grow: 1; /* Logonun tam ortada durmasını sağlar */
+  margin-right: auto;
 }
 
 .logo-mobile img {
   max-width: 100px; /* Logonun boyutunu kontrol et */
   height: auto;
-  margin-left: 6rem;
 }
 
 
