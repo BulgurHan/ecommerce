@@ -356,48 +356,48 @@
 </section>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const addToCartButton = document.getElementById('add-to-cart');
-        const sizeSelect = document.getElementById('size');
-        const quantityInput = document.getElementById('quantity');
-    
-        addToCartButton.addEventListener('click', function() {
-            const productId = "{{ product.id }}";  // Ürün ID'sini template'den al
-            const size = sizeSelect.value;
-            const quantity = quantityInput.value;
-    
-    
-            if (!size) {
-                alert('Lütfen bir beden seçiniz.');
-                return;
+document.addEventListener('DOMContentLoaded', function() {
+    const addToCartButton = document.getElementById('add-to-cart');
+    const sizeSelect = document.getElementById('size');
+    const quantityInput = document.getElementById('quantity');
+
+    addToCartButton.addEventListener('click', function() {
+        const productId = "{{ product.id }}";  // Ürün ID'sini template'den al
+        const size = sizeSelect.value;
+        const quantity = quantityInput.value;
+
+        if (!size) {
+            alert('Lütfen bir beden seçiniz.');
+            return;
+        }
+
+        fetch('/add_cart/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'  // CSRF token'ını template'den al
+            },
+            body: JSON.stringify({
+                product_id: productId,
+                size: size,
+                quantity: quantity
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Ürün sepete eklendi.');
+                window.location.reload();  // Sayfayı yenileyin
+            } else {
+                alert(data.message || 'Sepete ekleme işlemi başarısız.');
             }
-    
-            fetch('/add_cart/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'  // CSRF token'ını template'den al
-                },
-                body: JSON.stringify({
-                    product_id: productId,
-                    size: size,
-                    quantity: quantity
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Ürün sepete eklendi.');
-                } else {
-                    alert(data.message || 'Sepete ekleme işlemi başarısız.');
-                }
-            })
-            .catch(error => {
-                console.error('Hata:', error);
-                alert('Bir hata oluştu.');
-            });
+        })
+        .catch(error => {
+            console.error('Hata:', error);
+            alert('Bir hata oluştu.');
         });
-    });   
+    });
+});
 </script>
 
 {% endblock content %}
