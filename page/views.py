@@ -155,7 +155,8 @@ class ResultView(APIView):
                         order=order,
                         product=item.product,
                         price=item.product.price,
-                        quantity=item.quantity
+                        quantity=item.quantity,
+                         product_variant = item.variant
                     )
 
                 # Toplam fiyatı hesapla ve güncelle

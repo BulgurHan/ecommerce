@@ -4,12 +4,22 @@ from import_export import resources
 from .models import Order, OrderItem, Cart, CartItem, Adress, PaymentModel
 
 
+
+
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
-    readonly_fields = ['product', 'quantity', 'price']
+    fields = ['product', 'variant', 'quantity', 'price']
+    readonly_fields = ['product', 'variant', 'quantity', 'price']
     can_delete = False
     max_num = 0  # Yeni ürün eklenmesini engelle
+    def variant(self, obj):
+        if obj.product_variant:
+            return f"{obj.product_variant.product.name} - {obj.product_variant.get_size_display()}"
+        return "-"
+    
+    variant.short_description = "Ürün Varyantı"
 
+    
 
 class OrderResource(resources.ModelResource):
     class Meta:
@@ -38,3 +48,4 @@ admin.site.register(Cart)
 admin.site.register(CartItem)
 admin.site.register(Adress)
 admin.site.register(PaymentModel)
+

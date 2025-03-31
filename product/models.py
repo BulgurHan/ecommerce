@@ -217,4 +217,4 @@ class ProductVariant(models.Model):
         unique_together = ('product', 'size')  # Aynı ürün için aynı beden birden fazla eklenemez
 
     def __str__(self):
-        return f"{self.product.name} - {self.get_size_display()}"
+        return f"{self.get_size_display()}"

@@ -355,6 +355,27 @@
     </div>
 </section>
 
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const btnMinus = document.querySelector(".btn-num-product-down");
+        const btnPlus = document.querySelector(".btn-num-product-up");
+        const quantityInput = document.getElementById("quantity");
+    
+        btnMinus.addEventListener("click", function() {
+            let value = parseInt(quantityInput.value);
+            if (value > 1) {
+                quantityInput.value = value - 1;
+            }
+        });
+    
+        btnPlus.addEventListener("click", function() {
+            let value = parseInt(quantityInput.value);
+            quantityInput.value = value + 1;
+        });
+    });
+</script>
+    
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const addToCartButton = document.getElementById('add-to-cart');

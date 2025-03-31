@@ -43,26 +43,30 @@ class Order(models.Model):
         """
         Siparişin toplam tutarını hesaplar.
         """
-        total = sum(item.sub_total() for item in self.orderitem_set.all())
+        total = sum(item.sub_total() for item in self.items.all())  
         return total
+
 
     def __str__(self):
         return str(self.id)
 
+
+    
 class OrderItem(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.IntegerField(verbose_name='Adet')
-    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='TL Tutar')
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name="Ürün")
+    product_variant = models.ForeignKey(ProductVariant, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Varyant")
+    quantity = models.PositiveIntegerField(verbose_name="Adet")
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Fiyat")
 
     class Meta:
         db_table = 'OrderItem'
 
     def sub_total(self):
         return self.quantity * self.price
-
     def __str__(self):
-        return self.product.name
+        return f"{self.product.name} - {self.product_variant.get_size_display() if self.product_variant else 'Bilinmeyen Varyant'}"
+
 
 
 def order_post_save(sender, instance, **kwargs):

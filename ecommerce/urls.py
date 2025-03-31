@@ -3,7 +3,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path, include
 from page.views import home ,allProdCat, ProdCatDetail
-from product.views import add_cart, cart_detail, update_cart,PaymentPage,CheckoutView, save_address
+from product.views import add_cart, cart_detail, update_cart,PaymentPage, save_address
 
 
 
