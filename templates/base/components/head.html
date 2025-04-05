@@ -2,11 +2,19 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-	<title>noTAG</title>
+	{% if title %}
+	<title>{{title}} | noTAG</title>
+	<meta name="description" content="noTAG {{title}} ile tarzını yansıt. Rahat kalıbı ve kaliteli kumaşıyla günlük şıklığı yakalayın. Hemen sipariş verin!">
+
+	{% else %}
+	<title>Tarz Sahibi Tişört, Hoodie ve Eşofman Takımları | noTAG </title>
+	<meta name="description" content="noTAG ile tarzını konuştur. Kaliteli tişört, hoodie ve eşofman takımlarını hemen keşfet. Online sipariş ve güvenli ödeme.">
+	{% endif %}
+	
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 <!--===============================================================================================-->	
-	<link rel="icon" type="image/png" href="{% static "images/icons/favicon.png" %}  "/>
+	<link rel="icon" type="image/png" href="{% static "images/icons/favicon.ico" %}  "/>
 <!--===============================================================================================-->
 	<link rel="stylesheet" type="text/css" href="{% static "vendor/bootstrap/css/bootstrap.min.css" %} ">
 <!--===============================================================================================-->
