@@ -5,6 +5,9 @@ from django.urls import path, include
 from page.views import home ,allProdCat, ProdCatDetail
 from product.views import add_cart, cart_detail, update_cart,PaymentPage, save_address
 
+admin.site.site_header = "NoTag Yönetim Paneli"
+admin.site.site_title = "NoTag Admin"
+admin.site.index_title = "Yönetim Paneline Hoş Geldiniz"
 
 
 urlpatterns = [

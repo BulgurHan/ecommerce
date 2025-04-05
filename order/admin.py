@@ -44,8 +44,5 @@ class OrderAdmin(ImportExportModelAdmin):
     def has_add_permission(self, request):
         return False
 
-admin.site.register(Cart)
-admin.site.register(CartItem)
-admin.site.register(Adress)
-admin.site.register(PaymentModel)
+
 

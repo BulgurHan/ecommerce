@@ -38,15 +38,15 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'import_export',
-    'accounts',
-    'product',
-    'order',
+    'accounts.apps.AccountsConfig',
+    'product.apps.ProductConfig',
+    'order.apps.OrderConfig',
     'page.apps.PageConfig',
 
     #3rd party app
     'rest_framework',
     'rest_framework_simplejwt',
+    'import_export',
 ]
 
 MIDDLEWARE = [
