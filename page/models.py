@@ -22,6 +22,25 @@ class Email(models.Model):
         verbose_name_plural = "Email"
 
 
+class Phone(models.Model):
+    phone = models.CharField(max_length=20, unique=True)
+    def clean(self):
+        if Phone.objects.exists() and not self.pk:
+            raise ValidationError("Sadece bir tane telefon numarası kaydedilebilir.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean() 
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.phone
+    
+    class Meta:
+        verbose_name = "Telefon"
+        verbose_name_plural = "Telefon"
+
+
+
 class Kargo(models.Model):
     price = models.DecimalField(
         max_digits=10,

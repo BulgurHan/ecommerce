@@ -57,10 +57,12 @@
         </h4>
 
         <p class="stext-107 cl7 size-201">
-          destek@notagfashion.com
+          {% if settings %}{{settings.email}} {% endif %}
         </p>
         <p class="stext-107 cl7 size-201">
-          +90 (0505) 505 5555
+          {% if settings %}
+          +90 {{settings.phone}}
+          {% endif %}
         </p>
 
         <div class="p-t-27">

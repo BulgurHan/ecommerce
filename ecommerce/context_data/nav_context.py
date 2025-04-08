@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 from order.models import Cart, CartItem
 from product.models import ParentCategory, Category
+from page.models import Email, Kargo, Phone
 
 
 
@@ -30,4 +31,9 @@ def menu_links(request):
         'categories': Category.objects.only('id', 'name', 'parent_categories'),
         'cart': cart,
         'cart_items': cart_items,
+        'settings': {
+            'email': Email.objects.first(),
+            'phone': Phone.objects.first(),
+            'kargo': Kargo.objects.first()
+        }
     }

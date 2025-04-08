@@ -72,7 +72,8 @@ def allProdCat(request, parent_slug=None, category_slug=None):
     return render(request, 'category.html', {
         'parent_category': parent_category,
         'category': category,
-        'products': products
+        'products': products,
+        'title' : f'{parent_category} - {category.name}' if category else 'Tüm Ürünler',
     })
 
 
@@ -80,6 +81,7 @@ def allProdCat(request, parent_slug=None, category_slug=None):
 def ProdCatDetail(request, c_slug, product_slug):
     product = get_object_or_404(Product, category__slug=c_slug, slug=product_slug)
     return render(request, 'product.html', {
+        'title': product.name,
         'product': product,
         'latest_products': Product.objects.filter(avaible=True).only('id', 'name', 'price', 'imageOne').order_by('-created')[:10],  
         }
