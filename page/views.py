@@ -88,6 +88,13 @@ def ProdCatDetail(request, c_slug, product_slug):
         )
 
 
+def product_search(request):
+    query = request.GET.get('q')
+    if query:
+        products = Product.objects.filter(name__icontains=query)
+    else:
+        products = Product.objects.all()
+    return render(request, 'category.html', {'products': products, 'query': query, 'search': True})
 
 
 #---------------------------------------İYZİCO-------------------------------------------

@@ -9,7 +9,7 @@
 				<i class="fa fa-angle-right m-l-9 m-r-10" aria-hidden="true"></i>
 			</a>
 			<span class="stext-109 cl4">
-				{{parent_category.name}}
+				{{parent_category.name}} {% if search %}Ürün Ara{% endif %}
 			</span>
 		</div>
 	</div>
@@ -108,6 +108,8 @@
                     </div>
                 </div>
             </div>
+            {% empty %}
+            <li>Ürün bulunamadı.</li>
             {% endfor %}
         </div>
 
