@@ -30,8 +30,8 @@ class OrderResource(resources.ModelResource):
 @admin.register(Order)
 class OrderAdmin(ImportExportModelAdmin):
     resource_class = OrderResource
-    list_display = ['id', 'billingName', 'emailAddress', 'status', 'kargo', 'created']
-    list_display_links = ('id', 'billingName')
+    list_display = ['id', 'billingName', 'tracking_number', 'status', 'kargo','total', 'created']
+    list_display_links = ('id', 'billingName', 'tracking_number','total', 'created')
     list_editable = ('status', 'kargo')
     search_fields = ['id', 'billingName', 'emailAddress']
     readonly_fields = ['id', 'billingName', 'emailAddress', 'created']

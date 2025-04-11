@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models import Sum
+from django.utils.crypto import get_random_string
 import random
 from django.db.models.signals import post_save
 from django.core.mail import EmailMessage
@@ -32,13 +33,25 @@ class Order(models.Model):
     shippingPostCode = models.CharField(max_length=10, blank=True, verbose_name='Kargo Posta Kodu')
     status = models.CharField(max_length=15, default='Hazırlanıyor', choices=STATUS_CHOICES, verbose_name="Durum")
     kargo = models.IntegerField(default=0, verbose_name="Kargo Takip Numarası")
+    tracking_number = models.CharField(max_length=6, blank=True, null=True, verbose_name="Sipariş Takip Numarası")
 
     class Meta:
         db_table = 'order'
         ordering = ('-created',)
         verbose_name = 'Sipariş'
         verbose_name_plural = 'Siparişler'
-    
+
+    def save(self, *args, **kwargs):
+        if not self.tracking_number:
+            self.tracking_number = self.generate_tracking_number()
+        super().save(*args, **kwargs)
+
+    def generate_tracking_number(self):
+        while True:
+            number = str(random.randint(100000, 999999))  # 6 haneli sayı üret
+            if not Order.objects.filter(tracking_number=number).exists():
+                return number
+
     def calculate_total(self):
         """
         Siparişin toplam tutarını hesaplar.

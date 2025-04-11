@@ -97,6 +97,20 @@ def product_search(request):
     return render(request, 'category.html', {'products': products, 'query': query, 'search': True})
 
 
+def tracking_order(request):
+    if request.method == 'POST':
+        tracking_number = request.POST.get('tracking_number')
+        try:
+            order = Order.objects.get(tracking_number=tracking_number)
+            return render(request, 'order_tracking.html', {'order': order,'title': 'Sipariş Takip'})
+        except Order.DoesNotExist:
+            messages.error(request, "Bu takip numarasına ait sipariş bulunamadı.")
+            return render(request, 'order_tracking.html', {'title': 'Sipariş Takip'})
+    else:
+        return render(request, 'order_tracking.html', {'title': 'Sipariş Takip'})
+
+
+
 #---------------------------------------İYZİCO-------------------------------------------
 
 def get_client_ip(request):

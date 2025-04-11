@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path, include
-from page.views import home ,allProdCat, ProdCatDetail, product_search
+from page.views import home ,allProdCat, ProdCatDetail, product_search, tracking_order
 from product.views import add_cart, cart_detail, update_cart,PaymentPage, save_address
 
 admin.site.site_header = "NoTag Yönetim Paneli"
@@ -22,5 +22,6 @@ urlpatterns = [
     path('update_cart/', update_cart, name='update_cart'),
     path('payment/', PaymentPage.as_view(), name='payment'),
     path('save-address/', save_address, name='save_address'),
-    path('search/', product_search, name='product_search'),
+    path('ara/', product_search, name='product_search'),
+    path('siparis-takip/', tracking_order, name='tracking_order'),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
