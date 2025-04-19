@@ -2,17 +2,63 @@ from django.db import models
 from django.db.models import Sum
 from django.utils.crypto import get_random_string
 import random
-from django.db.models.signals import post_save
-from django.core.mail import EmailMessage
 from django.template.loader import get_template
+from django.db.models.signals import post_save
 from product.models import Product,ProductVariant
 from accounts.models import CustomUser
+from django.core.mail import EmailMessage
+from django.template.loader import get_template
+
+
+
+# Siparişle ilgili e-posta gönderme fonksiyonu
+def sendEmail(order_id, status="created"):
+    transaction = Order.objects.get(id=order_id)
+    order_items = OrderItem.objects.filter(order=transaction)
+
+    subject_map = {
+        "created": f"noTAG - Yeni Sipariş #{transaction.tracking_number}",
+        "shipped": f"noTAG - Siparişiniz Kargoya Verildi #{transaction.tracking_number}",
+        "cancelled": f"noTAG - Siparişiniz İptal Edildi #{transaction.tracking_number}",
+    }
+
+    template_map = {
+        "created": "email/order_created.html",
+        "shipped": "email/order_shipped.html",
+        "cancelled": "email/order_cancelled.html",
+    }
+
+    try:
+        subject = subject_map.get(status, f"noTAG - Sipariş Durumu #{transaction.tracking_number}")
+        to = [transaction.emailAddress]  
+        from_email = "destek@notagfashion.com"
+
+        context = {
+            'transaction': transaction,
+            'order_items': order_items,
+        }
+
+        template_path = template_map.get(status, "email/order_created.html")
+        message = get_template(template_path).render(context)
+
+        msg = EmailMessage(subject, message, to=to, from_email=from_email)
+        msg.content_subtype = 'html'
+        msg.send()
+
+    except Exception as e:
+        print("Mail gönderim hatası:", e)
+        return e
+
+
 
 STATUS_CHOICES = [
     ('Hazırlanıyor', 'Hazırlanıyor'),
     ('Kargoda', 'Kargoda'),
     ('Teslim Edildi', 'Teslim Edildi'),
+    ('Iptal Edildi', 'İptal Edildi'),
 ]
+
+    
 
 class Order(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
@@ -34,6 +80,9 @@ class Order(models.Model):
     status = models.CharField(max_length=15, default='Hazırlanıyor', choices=STATUS_CHOICES, verbose_name="Durum")
     kargo = models.IntegerField(default=0, verbose_name="Kargo Takip Numarası")
     tracking_number = models.CharField(max_length=6, blank=True, null=True, verbose_name="Sipariş Takip Numarası")
+    cancel_code = models.CharField(max_length=6, blank=True, null=True)
+    cancel_code_created = models.DateTimeField(blank=True, null=True) 
+    cancel_confirmed = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'order'
@@ -84,25 +133,10 @@ class OrderItem(models.Model):
 
 def order_post_save(sender, instance, **kwargs):
     if instance.status == 'Kargoda':
-        sendEmail(instance.id)
-
+        sendEmail(order_id=instance.id, status="shipped")
 post_save.connect(order_post_save, sender=Order)
 
 
-def sendEmail(order_id):
-    transaction = Order.objects.get(id=order_id)
-    order_items = OrderItem.objects.filter(order=transaction)
-    try:
-        subject = f"noTAG - Siparişiniz Kargoya Verildi #{transaction.id}"
-        to = [transaction.emailAddress]
-        from_email = "hurkus.siparis@gmail.com"
-        order_information = {'transaction': transaction, 'order_items': order_items}
-        message = get_template('email/kargo.html').render(order_information)
-        msg = EmailMessage(subject, message, to=to, from_email=from_email)
-        msg.content_subtype = 'html'
-        msg.send()
-    except Exception as e:
-        return e
 
 
 class Cart(models.Model):

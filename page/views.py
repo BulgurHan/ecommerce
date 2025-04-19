@@ -1,20 +1,17 @@
 from django.shortcuts import render,get_object_or_404
 from rest_framework.views import APIView
 from django.core.paginator import Paginator, EmptyPage
-from django.contrib.auth.models import AnonymousUser
 from django.urls import reverse
-from rest_framework.response import Response
 from django.http import HttpResponseRedirect
 from django.contrib import messages
+from django.conf import settings
 import json
 import random
-import pprint
 import iyzipay
 from ecommerce.settings import PAYMENT_OPTIONS
 from product.models import Collection, ParentCategory, Category, Product
 from order.models import PaymentModel, Cart, CartItem, Adress, Order, OrderItem
-
-
+from order.models import sendEmail
 
 
 def home(request):
@@ -188,6 +185,9 @@ class ResultView(APIView):
 
                 # Sepeti temizle
                 cart.delete()
+
+                # Sipariş e-postası gönder
+                sendEmail(order_id=order.id,status="created")
 
                 messages.success(request, "Ödeme başarıyla tamamlandı.")
                 return HttpResponseRedirect(result_path)

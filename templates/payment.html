@@ -1,4 +1,110 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ödeme Sayfası - Goldjigger</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  
+  <style>
+    #iyzico-checkout-form iframe {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-height: 600px;
+      display: block !important;
+      border: none;
+    }
 
+    #iyzico-checkout-form {
+      max-width: 100%;
+      overflow-x: auto;
+      padding: 10px;
+    }
+    
+    .mobile-redirect-message {
+      display: none;
+      text-align: center;
+      padding: 20px;
+      font-size: 18px;
+    }
+    
+    @media screen and (max-width: 768px) {
+      #iyzico-checkout-form {
+        display: none;
+      }
+      
+      .mobile-redirect-message {
+        display: block;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="iyzipay-checkout-form" class="popup">
+    {{ form|safe }}
+  </div>
+  
+  <div class="mobile-redirect-message">
+    <p>Ödeme sayfasına yönlendiriliyorsunuz...</p>
+    <p>Eğer yönlendirilmezseniz <a href="#" id="mobile-redirect-link">buraya tıklayın</a>.</p>
+  </div>
 
-{{ form | safe }}
+  <script>
+    // Gelişmiş mobil cihaz tespiti
+    function isMobileDevice() {
+      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+      return (
+        /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent) || 
+        (typeof window.orientation !== "undefined") ||
+        (window.matchMedia("(max-width: 768px)").matches && window.matchMedia("(hover: none)").matches)
+      );
+    }
 
+    // Iframe URL'sini bulma
+    function getIframeUrl() {
+      // Önce template'den gelen iframe_url'i kontrol et
+      const templateUrl = "{{ iframe_url|safe }}";
+      if (templateUrl && templateUrl !== "None") {
+        return templateUrl;
+      }
+      
+      // Iframe elementinden URL'yi al
+      const iframe = document.querySelector('#iyzico-checkout-form iframe');
+      if (iframe && iframe.src) {
+        return iframe.src;
+      }
+      
+      return null;
+    }
+
+    // Yönlendirme işlemi
+    function redirectToPaymentPage() {
+      const iframeUrl = getIframeUrl();
+      if (!iframeUrl) return;
+
+      // Yönlendirme linkini güncelle
+      const redirectLink = document.getElementById('mobile-redirect-link');
+      if (redirectLink) {
+        redirectLink.href = iframeUrl;
+      }
+
+      // Yeni sekmede aç
+      const newWindow = window.open(iframeUrl, '_blank');
+      
+      // Eğer pop-up engellendiyse, 3 sn sonra aynı sayfada yönlendir
+      if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+        setTimeout(() => {
+          window.location.href = iframeUrl;
+        }, 3000);
+      }
+    }
+
+    // Sayfa yüklendiğinde kontrol yap
+    document.addEventListener('DOMContentLoaded', function() {
+      if (isMobileDevice() && window.location.search.indexOf('nomobile=1') === -1) {
+        redirectToPaymentPage();
+      }
+    });
+  </script>
+</body>
+</html>

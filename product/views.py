@@ -2,10 +2,6 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.shortcuts import reverse, resolve_url
 from django.views.generic import TemplateView
 from django.http import JsonResponse
-from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
-from django.core.mail import EmailMessage
-from django.template.loader import get_template
 from product.models import Product,ProductVariant
 from order.models import Order, OrderItem, Cart, CartItem, Adress, PaymentModel
 import iyzipay
@@ -167,24 +163,7 @@ def payment(request):
 
 
 
-# Sipariş detaylarını e-posta ile gönderme
-def sendEmail(order_id):
-    transaction = Order.objects.get(id=order_id)
-    order_items = OrderItem.objects.filter(order=transaction)
-    try:
-        subject = "noTAG - Yeni Sipariş #{}".format(transaction)
-        to = ['{}'.format(transaction.emailAddress)]
-        from_email = "hurkus.siparis@gmail.com"
-        order_information = {
-            'transaction': transaction,
-            'order_items': order_items
-        }
-        message = get_template('email/email.html').render(order_information)
-        msg = EmailMessage(subject, message, to=to, from_email=from_email)
-        msg.content_subtype = 'html'
-        msg.send()
-    except IOError as e:
-        return e
+
 
 
 
@@ -299,7 +278,6 @@ class PaymentPage(TemplateView):
         token = content.get("token")  # JSON'dan token alınıyor
         payment_model.token = token  # Token modelde saklanıyor
         payment_model.save()
-
         return context
 
 
@@ -359,4 +337,4 @@ def save_address(request):
         return redirect('payment')  # Payment sayfasına yönlendir
     else:
         messages.error(request, 'Geçersiz istek.')
-        return redirect('cart') # Sepet sayfasına yönlendir
+        return redirect('cart_detail') # Sepet sayfasına yönlendir

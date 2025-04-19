@@ -58,7 +58,7 @@
                         <table class="table" >
                             <tr class="table">
                                 <th >Sipariş Sahibi</th>
-                                <th >Şehir</th>
+                                <th >E-mail</th>
                                 <th >Toplam Fiyat</th>
                                 <th >Durum</th>
                                 <th >İptal Et</th>
@@ -66,7 +66,7 @@
     
                             <tr class="table_row">
                                 <td> {{ order.billingName|mask_name }} </td>
-                                <td> {{ order.billingCity|mask_name }} </td>
+                                <td> {{ order.emailAddress|mask_email }} </td>
                                 <td >₺ {{ order.total }}</td>
                                 <td > {{ order.status }}</td>
                                 <td >

@@ -32,6 +32,9 @@
 													</ul>
 												</li>
 								{% endfor %}
+								<li>
+									<a href="{% url "tracking_order" %}">Sipariş Takip</a>
+								</li>
 							<li class="label1" data-label1="yakında">
 								<a href="#">Kendin Tasarla</a>
 							</li>
@@ -111,6 +114,12 @@
 					</span>
 				</li>
         {% endfor %}
+					<li>
+						<a href="{% url "tracking_order" %}">Sipariş Takip</a>
+					</li>
+				<li >
+					<a href="#" class="label1 rs1" data-label1="yakında">Kendin Tasarla</a>
+				</li>
 			</ul>
 		</div>
 

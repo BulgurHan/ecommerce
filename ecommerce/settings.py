@@ -151,3 +151,13 @@ PAYMENT_OPTIONS = {
     "secret_key": 'sandbox-YWqX9LMrirXkJupl16tpMpu3fkqKKVkR',
     "base_url": "sandbox-api.iyzipay.com"
 }
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'mail.notagfashion.com'
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True  
+EMAIL_HOST_USER = 'destek@notagfashion.com'
+EMAIL_HOST_PASSWORD = 'notagfas007'  
+
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
