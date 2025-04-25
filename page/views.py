@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.contrib import messages
 from django.conf import settings
+from django.utils import timezone
 import json
 import random
 import iyzipay
@@ -12,6 +13,11 @@ from ecommerce.settings import PAYMENT_OPTIONS
 from product.models import Collection, ParentCategory, Category, Product
 from order.models import PaymentModel, Cart, CartItem, Adress, Order, OrderItem
 from order.models import sendEmail
+from django.http import JsonResponse
+from django.core.mail import send_mail
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from django.utils.crypto import get_random_string
 
 
 def home(request):
@@ -106,8 +112,65 @@ def tracking_order(request):
     else:
         return render(request, 'order_tracking.html', {'title': 'Sipariş Takip'})
 
+@csrf_exempt  # eğer JavaScript üzerinden POST atılacaksa gerekli olabilir
+def send_verification_code(request):
+    if request.method == "POST":
+        order_id = request.POST.get("order_id")
+
+        try:
+            order = get_object_or_404(Order, id=order_id)
+            code = get_random_string(length=6, allowed_chars='0123456789')
+
+            # kodu session'a kaydet
+            request.session['cancel_code'] = code
+            request.session['cancel_order_id'] = order_id
+
+            send_mail(
+                subject="Sipariş İptal Doğrulama Kodu",
+                message=f"Siparişinizi iptal etmek için bu kodu girin: {code}",
+                from_email="destek@notagfashion.com",
+                recipient_list=[order.emailAddress],
+                fail_silently=False,
+            )
+            order.cancel_code = code
+            order.cancel_code_created = timezone.now()
+            order.save()
+
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
 
 
+@require_POST
+def confirm_cancelation(request):
+    order_id = request.POST.get('order_id')
+    entered_code = request.POST.get('verification_code')
+
+    if not order_id or not entered_code:
+        return JsonResponse({'success': False, 'message': 'Tüm alanlar zorunludur.'}, status=400)
+
+    try:
+        order = get_object_or_404(Order, id=int(order_id))
+    except ValueError:
+        return JsonResponse({'success': False, 'message': 'Geçersiz sipariş ID.'}, status=400)
+
+    if order.cancel_code != entered_code:
+        return JsonResponse({'success': False, 'message': 'Doğrulama kodu hatalı.'}, status=403)
+
+    # Mail gönder
+    sendEmail(
+        order_id=order.id,
+        status="cancelled",
+    )
+
+    # Stok geri ekle
+
+
+    order.status = 'Iptal Edildi'
+    order.cancel_confirmed = True
+    order.save()
+
+    return JsonResponse({'success': True, 'message': 'Siparişiniz iptal edildi.'})
 #---------------------------------------İYZİCO-------------------------------------------
 
 def get_client_ip(request):

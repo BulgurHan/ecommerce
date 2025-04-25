@@ -71,19 +71,126 @@
                                 <td > {{ order.status }}</td>
                                 <td >
                                     {% if order.status == 'Hazırlanıyor' %}
-                                        <a href="#" class="btn btn-danger">İptal Et</a>
+                                        <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#confirmationModal">
+                                            İptal Et
+                                        </button>
                                     {% else %}
                                         İptal Edilemez
                                     {% endif %}
                                 </td>
-                                
                             </tr>
                         </table>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Onay Modalı -->
+        <div class="modal fade pt-5 mt-5" id="confirmationModal" tabindex="-1" role="dialog" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="confirmationModalLabel">Sipariş İptali</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        Siparişinizi iptal etmek istediğinizden emin misiniz?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Vazgeç</button>
+                        <button type="button" class="btn btn-danger" data-dismiss="modal" data-toggle="modal" data-target="#verificationModal" onclick="sendVerificationCode({{ order.id }})">
+                            Evet, İptal Et
+                        </button>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Doğrulama Kodu Modalı -->
+        <div class="modal fade mt-5 pt-5" id="verificationModal" tabindex="-1" role="dialog" aria-labelledby="verificationModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <form method="POST" action="#">
+                        {% csrf_token %}
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="verificationModalLabel">İptal Onayı</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <p>İptal işlemini tamamlamak için lütfen e-postanıza gönderilen doğrulama kodunu giriniz.</p>
+                            <div class="form-group">
+                                <label for="verificationCode">Doğrulama Kodu</label>
+                                <input type="text" class="form-control" id="verificationCode" name="verification_code" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Vazgeç</button>
+                            <button type="submit" class="btn btn-danger">İptali Onayla</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     {% endif %}
 
 </div>
+
+<script>
+    function sendVerificationCode(orderId) {
+        fetch("{% url 'send_verification_code' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: `order_id=${orderId}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                $('#confirmationModal').modal('hide');
+                $('#verificationModal').modal('show');
+            } else {
+                alert("Kod gönderilemedi: " + data.error);
+            }
+        })
+        .catch(error => {
+            console.error("Hata:", error);
+        });
+    }
+</script>
+<script>
+    document.querySelector('#verificationModal form').addEventListener('submit', function(e) {
+        e.preventDefault();
+    
+        const orderId = "{{ order.id }}";  // Eğer context'te `order.id` varsa
+        const verificationCode = document.querySelector('#verificationCode').value;
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+        fetch("{% url 'confirm_cancelation' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({
+                order_id: orderId,
+                verification_code: verificationCode
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            if (data.success) {
+                location.reload();
+            }
+        });
+    });
+    </script>
+    
 {% endblock %}

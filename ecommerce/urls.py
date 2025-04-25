@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path, include
-from page.views import home ,allProdCat, ProdCatDetail, product_search, tracking_order
+from page.views import home ,allProdCat, ProdCatDetail, product_search, tracking_order, send_verification_code,confirm_cancelation
 from product.views import add_cart, cart_detail, update_cart,PaymentPage, save_address
 
 admin.site.site_header = "NoTag Yönetim Paneli"
@@ -24,4 +24,6 @@ urlpatterns = [
     path('save-address/', save_address, name='save_address'),
     path('ara/', product_search, name='product_search'),
     path('siparis-takip/', tracking_order, name='tracking_order'),
+    path('send_verification_code/', send_verification_code, name='send_verification_code'),
+    path('confirm-cancelation/', confirm_cancelation, name='confirm_cancelation'),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
