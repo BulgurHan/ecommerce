@@ -1,6 +1,21 @@
 from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
+import os
+from uuid import uuid4
+
+
+
+def turkish_file_rename(instance, filename):
+    name, ext = os.path.splitext(filename)
+    name = slugify(name)  # Türkçe karakterleri temizler
+    new_filename = f"{name}-{uuid4()}{ext}"
+    
+    # klasör ismini modele göre belirleyebilirsin
+    folder = instance.__class__.__name__.lower()
+    return os.path.join(folder, new_filename)
+
+
 
 
 class ParentCategory(models.Model):
@@ -16,7 +31,7 @@ class ParentCategory(models.Model):
         blank=True
     )
     image = models.ImageField(
-        upload_to = 'parentCategory',
+        upload_to = turkish_file_rename,
         blank = True,
         verbose_name = 'Resim'
     )
@@ -140,18 +155,18 @@ class Product(models.Model):
         verbose_name='Tutar'
     )
     imageOne = models.ImageField(
-        upload_to='product',
+        upload_to=turkish_file_rename,
         blank=True,
         verbose_name='Resim 1'
     )
     imageTwo = models.ImageField(
-        upload_to='product',
+        upload_to=turkish_file_rename,
         null=True,
         blank=True,
         verbose_name='Resim 2'
     )
     imageThree = models.ImageField(
-        upload_to='product',
+        upload_to=turkish_file_rename,
         blank=True,
         null=True,
         verbose_name='Resim 3'
